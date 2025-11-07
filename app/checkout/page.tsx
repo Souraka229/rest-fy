@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createOrder, getCurrentUser } from '@/lib/supabase'
+import { initiatePayment } from '@/lib/payment'
 
 interface CheckoutData {
   restaurant: any
@@ -57,19 +58,32 @@ export default function CheckoutPage() {
         delivery_address: customerInfo.address,
         special_instructions: customerInfo.instructions,
         items_total: checkoutData.total,
-        delivery_fee: checkoutData.restaurant.delivery_fee,
-        total_amount: checkoutData.total + checkoutData.restaurant.delivery_fee,
+        delivery_fee: checkoutData.restaurant.delivery_fee || 0,
+        total_amount: checkoutData.total + (checkoutData.restaurant.delivery_fee || 0),
         payment_method: 'cash',
         payment_status: 'pending'
       }
 
       const order = await createOrder(orderData)
       
-      // Vider le panier
-      localStorage.removeItem('currentCart')
+      // Simuler le paiement
+      const paymentResult = await initiatePayment(order)
       
-      // Rediriger vers la page de confirmation
-      router.push(`/orders/${order.id}`)
+      if (paymentResult.success) {
+        // Sauvegarder pour la page de succès
+        localStorage.setItem('lastOrder', JSON.stringify({
+          ...order,
+          restaurant: checkoutData.restaurant
+        }))
+        
+        // Vider le panier
+        localStorage.removeItem('currentCart')
+        
+        // Rediriger vers la page de succès
+        router.push(paymentResult.paymentUrl || '/payment/success')
+      } else {
+        alert('Erreur de paiement: ' + paymentResult.error)
+      }
     } catch (error) {
       console.error('Error creating order:', error)
       alert('Erreur lors de la création de la commande')
@@ -105,16 +119,19 @@ export default function CheckoutPage() {
                   placeholder="Nom complet *"
                   value={customerInfo.name}
                   onChange={(e) => setCustomerInfo({...customerInfo, name: e.target.value})}
+                  required
                 />
                 <Input
                   placeholder="Téléphone *"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo({...customerInfo, phone: e.target.value})}
+                  required
                 />
                 <Input
                   placeholder="Adresse de livraison *"
                   value={customerInfo.address}
                   onChange={(e) => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  required
                 />
                 <Input
                   placeholder="Instructions spéciales (optionnel)"
@@ -147,11 +164,11 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>Frais de livraison:</span>
-                      <span>{checkoutData.restaurant.delivery_fee === 0 ? 'Gratuit' : `${checkoutData.restaurant.delivery_fee.toLocaleString()} FCFA`}</span>
+                      <span>{checkoutData.restaurant.delivery_fee === 0 ? 'Gratuit' : `${checkoutData.restaurant.delivery_fee?.toLocaleString()} FCFA`}</span>
                     </div>
                     <div className="flex justify-between font-bold text-lg">
                       <span>Total:</span>
-                      <span>{(checkoutData.total + checkoutData.restaurant.delivery_fee).toLocaleString()} FCFA</span>
+                      <span>{(checkoutData.total + (checkoutData.restaurant.delivery_fee || 0)).toLocaleString()} FCFA</span>
                     </div>
                   </div>
                 </div>
