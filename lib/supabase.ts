@@ -3,119 +3,47 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-})
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables')
+}
 
-// Fonctions utilitaires pour les données dynamiques
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Types pour TypeScript
+export type Database = {
+  // Vos types de base de données ici
+}
+
+// Fonctions utilitaires
 export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  if (error) {
+    console.error('Error getting user:', error)
+    return null
+  }
   return user
 }
 
-export async function getCurrentProfile() {
-  const user = await getCurrentUser()
-  if (!user) return null
+export async function getRestaurants(filters: any = {}) {
+  try {
+    let query = supabase
+      .from('restaurants')
+      .select('*')
+      .eq('is_active', true)
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+    if (filters.category) {
+      query = query.eq('category', filters.category)
+    }
+    if (filters.search) {
+      query = query.ilike('name', `%${filters.search}%`)
+    }
 
-  return profile
-}
-
-export async function getRestaurants(filters = {}) {
-  let query = supabase
-    .from('restaurants')
-    .select('*')
-    .eq('is_active', true)
-
-  // Appliquer les filtres dynamiquement
-  if (filters.category) {
-    query = query.eq('category', filters.category)
-  }
-  if (filters.city) {
-    query = query.eq('city', filters.city)
-  }
-  if (filters.search) {
-    query = query.ilike('name', `%${filters.search}%`)
-  }
-
-  const { data, error } = await query.order('rating', { ascending: false })
-  
-  if (error) {
+    const { data, error } = await query.order('rating', { ascending: false })
+    
+    if (error) throw error
+    return data || []
+  } catch (error) {
     console.error('Error fetching restaurants:', error)
     return []
   }
-  
-  return data || []
-}
-
-export async function getRestaurantBySlug(slug: string) {
-  const { data, error } = await supabase
-    .from('restaurants')
-    .select('*')
-    .eq('slug', slug)
-    .single()
-
-  if (error) {
-    console.error('Error fetching restaurant:', error)
-    return null
-  }
-
-  return data
-}
-
-export async function getMenuItems(restaurantId: string) {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_available', true)
-    .order('sort_order')
-
-  if (error) {
-    console.error('Error fetching menu items:', error)
-    return []
-  }
-
-  return data || []
-}
-
-export async function createOrder(orderData: any) {
-  const { data, error } = await supabase
-    .from('orders')
-    .insert([orderData])
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Error creating order:', error)
-    throw error
-  }
-
-  return data
-}
-
-export async function getUserOrders(userId: string) {
-  const { data, error } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      restaurant:restaurants(name, address, image_url, phone)
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Error fetching user orders:', error)
-    return []
-  }
-
-  return data || []
 }
