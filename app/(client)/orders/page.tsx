@@ -205,3 +205,87 @@ export default function OrdersPage() {
           
           {/* Total and actions */}
           <div className="flex justify-between items-center pt-2 border-t">
+            <div className="font-bold text-lg">
+              {order.total_amount.toLocaleString()} FCFA
+            </div>
+            <div className="flex gap-2">
+              {order.status === 'completed' && (
+                <Button size="sm" variant="outline">
+                  <Star className="w-4 h-4 mr-1" />
+                  Noter
+                </Button>
+              )}
+              <Button size="sm" variant="outline">
+                Détails
+              </Button>
+              {['pending', 'confirmed'].includes(order.status) && (
+                <Button size="sm" variant="destructive">
+                  Annuler
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Mes Commandes</h1>
+          <p className="text-gray-600">Suivez l'état de vos commandes en temps réel</p>
+        </div>
+        
+        {/* Tabs */}
+        <div className="flex gap-4 mb-6">
+          <Button
+            variant={activeTab === 'active' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('active')}
+            className="rounded-full"
+          >
+            Commandes actives ({activeOrders.length})
+          </Button>
+          <Button
+            variant={activeTab === 'history' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('history')}
+            className="rounded-full"
+          >
+            Historique ({historyOrders.length})
+          </Button>
+        </div>
+        
+        {/* Orders list */}
+        <div className="space-y-4">
+          {(activeTab === 'active' ? activeOrders : historyOrders).map(order => (
+            <OrderCard key={order.id} order={order} />
+          ))}
+          
+          {(activeTab === 'active' ? activeOrders : historyOrders).length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <div className="text-6xl mb-4">🍽️</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {activeTab === 'active' ? 'Aucune commande active' : 'Aucune commande dans l\'historique'}
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  {activeTab === 'active' 
+                    ? 'Vos commandes en cours apparaîtront ici' 
+                    : 'Vos commandes passées apparaîtront ici'
+                  }
+                </p>
+                <Button 
+                  onClick={() => window.location.href = '/'}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Découvrir les restaurants
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
