@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@fedapay/node'],
-  },
   images: {
-    domains: ['res.cloudinary.com', 'images.unsplash.com'],
+    domains: ['res.cloudinary.com'],
   },
   typescript: {
     ignoreBuildErrors: false,
