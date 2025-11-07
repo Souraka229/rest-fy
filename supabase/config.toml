@@ -1,0 +1,18 @@
+[global]
+project_id = "your-project-ref"
+
+[auth]
+site_url = "https://restafy.com"
+additional_redirect_urls = [
+    "https://restafy.com/auth/callback",
+    "http://localhost:3000/auth/callback"
+]
+
+[auth.jwt]
+jwt_expiry = 3600
+
+[storage]
+file_size_limit = 52428800  # 50MB
+
+[api]
+max_rows = 1000
