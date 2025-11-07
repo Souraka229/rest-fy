@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:push": "supabase db push",
+    "db:reset": "supabase db reset",
+    "db:seed": "supabase db seed",
+    "deploy:setup": "npm run db:push && npm run db:seed",
+    "deploy:production": "npm run build && docker-compose up -d"
+  }
+}
